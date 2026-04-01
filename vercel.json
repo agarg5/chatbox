@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npx vite build --config vite.web.config.ts",
+  "outputDirectory": "dist/web",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

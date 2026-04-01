@@ -188,3 +188,5 @@ storybook-static
 .gstack/
 .worktrees/
 .claude/worktrees/
+.env.local
+.env
