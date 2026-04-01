@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "installCommand": "pnpm install --ignore-scripts",
   "buildCommand": "npx vite build --config vite.web.config.ts",
   "outputDirectory": "dist/web",
