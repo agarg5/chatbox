@@ -219,15 +219,7 @@ function ChessApp() {
   }, [sendToParent])
 
   const onPieceDrop = useCallback(
-    ({
-      sourceSquare,
-      targetSquare,
-    }: {
-      piece: { isSparePiece: boolean; position: string; pieceType: string }
-      sourceSquare: string
-      targetSquare: string | null
-    }) => {
-      if (!targetSquare) return false
+    (sourceSquare: string, targetSquare: string, piece: string) => {
       const game = gameRef.current
       if (!game || !gameState) return false
 
@@ -279,16 +271,12 @@ function ChessApp() {
       <div style={{ width: 400, height: 400 }}>
         {gameState ? (
           <Chessboard
-            options={{
-              position: gameState.game.fen(),
-              boardOrientation: gameState.playerColor,
-              onPieceDrop,
-              allowDragging: true,
-              showAnimations: true,
-              animationDurationInMs: 200,
-              darkSquareStyle: { backgroundColor: '#779952' },
-              lightSquareStyle: { backgroundColor: '#edeed1' },
-            }}
+            position={gameState.game.fen()}
+            boardOrientation={gameState.playerColor}
+            onPieceDrop={onPieceDrop}
+            animationDuration={200}
+            customDarkSquareStyle={{ backgroundColor: '#779952' }}
+            customLightSquareStyle={{ backgroundColor: '#edeed1' }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center border border-zinc-700 rounded-lg">

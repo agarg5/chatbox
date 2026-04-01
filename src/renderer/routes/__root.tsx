@@ -251,6 +251,13 @@ function Root() {
     }
   }, [needRoomForMacWindowControls])
 
+  // If we're inside an iframe and on an /apps/* route, render without layout (standalone app)
+  const isInIframe = typeof window !== 'undefined' && window.parent !== window
+  const isAppRoute = location.pathname.startsWith('/apps/')
+  if (isInIframe && isAppRoute) {
+    return <Outlet />
+  }
+
   return (
     <Box className="box-border App relative" spellCheck={spellCheck} dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <BackgroundImageOverlay />
