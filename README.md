@@ -1,267 +1,159 @@
-<p align="right">
-  <a href="README.md">English</a> |
-  <a href="./doc/README-CN.md">简体中文</a>
-</p>
+# ChatBridge (Chatbox Fork)
 
-This is the repository for the Chatbox Community Edition, open-sourced under the GPLv3 license.
+AI chat platform with third-party app integration, built on top of [Chatbox](https://github.com/chatboxai/chatbox). Apps plug in, register tools, render custom UI via iframes, and communicate bidirectionally with the chatbot.
 
-[Chatbox is going open-source Again!](https://github.com/chatboxai/chatbox/issues/2266)
+Built for [Gauntlet AI](https://gauntletai.com).
 
-We regularly sync code from the pro repo to this repo, and vice versa.
+## Architecture
 
-### Download for Desktop
-
-<table style="width: 100%">
-  <tr>
-    <td width="25%" align="center">
-      <b>Windows</b>
-    </td>
-    <td width="25%" align="center" colspan="2">
-      <b>MacOS</b>
-    </td>
-    <td width="25%" align="center">
-      <b>Linux</b>
-    </td>
-  </tr>
-  <tr style="text-align: center">
-    <td align="center" valign="middle">
-      <a href='https://chatboxai.app/?c=download-windows'>
-        <img src='./doc/statics/windows.png' style="height:24px; width: 24px" />
-        <br />
-        <b>Setup.exe</b>
-      </a>
-    </td>
-    <td align="center" valign="middle">
-      <a href='https://chatboxai.app/?c=download-mac-intel'>
-        <img src='./doc/statics/mac.png' style="height:24px; width: 24px" />
-        <br />
-        <b>Intel</b>
-      </a>
-    </td>
-    <td align="center" valign="middle">
-      <a href='https://chatboxai.app/?c=download-mac-aarch'>
-        <img src='./doc/statics/mac.png' style="height:24px; width: 24px" />
-        <br />
-        <b style="white-space: nowrap;">Apple Silicon</b>
-      </a>
-    </td>
-    <td align="center" valign="middle">
-      <a href='https://chatboxai.app/?c=download-linux'>
-        <img src='./doc/statics/linux.png' style="height:24px; width: 24px" />
-        <br />
-        <b>AppImage</b>
-      </a>
-    </td>
-  </tr>
-</table>
-
-### Download for iOS/Android
-
-<a href='https://apps.apple.com/app/chatbox-ai/id6471368056' style='margin-right: 4px'>
-<img src='./doc/statics/app_store.webp' style="height:38px;" />
-</a>
-<a href='https://play.google.com/store/apps/details?id=xyz.chatboxapp.chatbox' style='margin-right: 4px'>
-<img src='./doc/statics/google_play.png' style="height:38px;" />
-</a>
-<a href='https://chatboxai.app/install?download=android_apk' style='margin-right: 4px; display: inline-flex; justify-content: center'>
-<img src='./doc/statics/android.png' style="height:28px; display: inline-block" />
-.APK
-</a>
-
-For more information: [chatboxai.app](https://chatboxai.app/)
-
----
-<div align="center" markdown="1">
-  <a href="https://go.warp.dev/chatbox">
-    <img alt="Warp sponsorship" width="400" src="https://raw.githubusercontent.com/warpdotdev/brand-assets/refs/heads/main/Github/Sponsor/Warp-Github-LG-02.png">
-  </a>
-
-### [Warp, built for coding with multiple AI agents.](https://go.warp.dev/chatbox)
-[Available for MacOS, Linux, & Windows](https://go.warp.dev/chatbox)<br>
-</div>
-
-<hr>
-
-<h1 align="center">
-<img src='./doc/statics/icon.png' width='30'>
-<span>
-    Chatbox
-    <span style="font-size:8px; font-weight: normal;">(Community Edition)</span>
-</span>
-</h1>
-<p align="center">
-    <em>Your Ultimate AI Copilot on the Desktop. <br />Chatbox is a desktop client for ChatGPT, Claude and other LLMs, available on Windows, Mac, Linux</em>
-</p>
-
-<p align="center">
-<a href="https://github.com/chatboxai/chatbox/releases" target="_blank">
-<img alt="macOS" src="https://img.shields.io/badge/-macOS-black?style=flat-square&logo=apple&logoColor=white" />
-</a>
-<a href="https://github.com/chatboxai/chatbox/releases" target="_blank">
-<img alt="Windows" src="https://img.shields.io/badge/-Windows-blue?style=flat-square&logo=windows&logoColor=white" />
-</a>
-<a href="https://github.com/chatboxai/chatbox/releases" target="_blank">
-<img alt="Linux" src="https://img.shields.io/badge/-Linux-yellow?style=flat-square&logo=linux&logoColor=white" />
-</a>
-<a href="https://github.com/chatboxai/chatbox/releases" target="_blank">
-<img alt="Downloads" src="https://img.shields.io/github/downloads/chatboxai/chatbox/total.svg?style=flat" />
-</a>
-</p>
-
-<a href="https://www.producthunt.com/posts/chatbox?utm_source=badge-featured&utm_medium=badge&utm_souce=badge-chatbox" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=429547&theme=light" alt="Chatbox - Better&#0032;UI&#0032;&#0038;&#0032;Desktop&#0032;App&#0032;for&#0032;ChatGPT&#0044;&#0032;Claude&#0032;and&#0032;other&#0032;LLMs&#0046; | Product Hunt" style="width: 150px; height: 30px;" width="100" height="40" /></a>
-
-<a href="./doc/statics/snapshot_light.png">
-<img src="./doc/statics/snapshot_light.png" width="400"/>
-</a>
-<a href="./doc/statics/snapshot_dark.png">
-<img src="./doc/statics/snapshot_dark.png" width="400"/>
-</a>
-
-<!-- <table>
-<tr>
-<td>
-<img src="./dec/../doc/demo_mobile_1.png" alt="App Screenshot" style="box-shadow: 2px 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; border-radius: 8px; height: 300px" />
-</td>
-<td>
-<img src="./dec/../doc/demo_mobile_2.png" alt="App Screenshot" style="box-shadow: 2px 2px 10px rgba(0,0,0,0.1); border: 1px solid #ddd; border-radius: 8px; height: 300px" />
-</td>
-</tr>
-</table> -->
-
-## Features
-
--   **Local Data Storage**  
-    :floppy_disk: Your data remains on your device, ensuring it never gets lost and maintains your privacy.
-
--   **No-Deployment Installation Packages**  
-    :package: Get started quickly with downloadable installation packages. No complex setup necessary!
-
--   **Support for Multiple LLM Providers**  
-    :gear: Seamlessly integrate with a variety of cutting-edge language models:
-
-    -   OpenAI (ChatGPT)
-    -   Azure OpenAI
-    -   Claude
-    -   Google Gemini Pro
-    -   Ollama (enable access to local models like llama2, Mistral, Mixtral, codellama, vicuna, yi, and solar)
-    -   ChatGLM-6B
-
--   **Image Generation with Dall-E-3**  
-    :art: Create the images of your imagination with Dall-E-3.
-
--   **Enhanced Prompting**  
-    :speech_balloon: Advanced prompting features to refine and focus your queries for better responses.
-
--   **Keyboard Shortcuts**  
-    :keyboard: Stay productive with shortcuts that speed up your workflow.
-
--   **Markdown, Latex & Code Highlighting**  
-    :scroll: Generate messages with the full power of Markdown and Latex formatting, coupled with syntax highlighting for various programming languages, enhancing readability and presentation.
-
--   **Prompt Library & Message Quoting**  
-    :books: Save and organize prompts for reuse, and quote messages for context in discussions.
-
--   **Streaming Reply**  
-    :arrow_forward: Provide rapid responses to your interactions with immediate, progressive replies.
-
--   **Ergonomic UI & Dark Theme**  
-    :new_moon: A user-friendly interface with a night mode option for reduced eye strain during extended use.
-
--   **Team Collaboration**  
-    :busts_in_silhouette: Collaborate with ease and share OpenAI API resources among your team. [Learn More](./team-sharing/README.md)
-
--   **Cross-Platform Availability**  
-    :computer: Chatbox is ready for Windows, Mac, Linux users.
-
--   **Access Anywhere with the Web Version**  
-    :globe_with_meridians: Use the web application on any device with a browser, anywhere.
-
--   **iOS & Android**  
-    :phone: Use the mobile applications that will bring this power to your fingertips on the go.
-
--   **Multilingual Support**  
-    :earth_americas: Catering to a global audience by offering support in multiple languages:
-
-    -   English
-    -   简体中文 (Simplified Chinese)
-    -   繁體中文 (Traditional Chinese)
-    -   日本語 (Japanese)
-    -   한국어 (Korean)
-    -   Français (French)
-    -   Deutsch (German)
-    -   Русский (Russian)
-    -   Español (Spanish)
-
--   **And More...**  
-    :sparkles: Constantly enhancing the experience with new features!
-
-## FAQ
-
--   [Frequently Asked Questions](./doc/FAQ.md)
-
-## Why I made Chatbox?
-
-I developed Chatbox initially because I was debugging some prompts and found myself in need of a simple and easy-to-use prompt and API debugging tool. I thought there might be more people who needed such a tool, so I open-sourced it.
-
-At first, I didn't know that it would be so popular. I listened to the feedback from the open-source community and continued to develop and improve it. Now, it has become a very useful AI desktop application. There are many users who love Chatbox, and they not only use it for developing and debugging prompts, but also for daily chatting, and even to do some more interesting things like using well-designed prompts to make AI play various professional roles to assist them in everyday work...
-
-## How to Contribute
-
-Any form of contribution is welcome, including but not limited to:
-
--   Submitting issues
--   Submitting pull requests
--   Submitting feature requests
--   Submitting bug reports
--   Submitting documentation revisions
--   Submitting translations
--   Submitting any other forms of contribution
-
-## Prerequisites
-
-- Node.js (v20.x – v22.x)
-- npm (required – pnpm is not supported)
-
-## Build Instructions
-
-1. Clone the repository from Github
-
-```bash
-git clone https://github.com/chatboxai/chatbox.git
+```
+Browser (Chatbox + Vite)               Express API Server           External Services
+┌──────────────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
+│  Chatbox UI (sidebar,    │     │  POST /api/chat      │     │  OpenAI GPT-4o  │
+│  theme, dark mode)       │────>│  (SSE streaming)     │────>│  (function call) │
+│                          │<────│                      │<────│                  │
+│  /chatbridge (chat UI)   │     │  POST /api/chat/     │     │  Supabase        │
+│                          │     │   :id/tool-result    │     │  (Postgres)      │
+│  /apps/chess   (iframe)  │     │                      │     │                  │
+│  /apps/weather (iframe)  │     │  GET /api/apps       │     │  GitHub API      │
+│  /apps/github  (iframe)  │     │  GET /api/bootstrap  │     │  Open-Meteo API  │
+└──────────────────────────┘     └──────────────────────┘     └─────────────────┘
+         │        ▲
+         │ postMessage (TOOL_INVOKE / TOOL_RESULT / READY / USER_ACTION / APP_COMPLETE)
+         ▼        │
+    ┌──────────────┐
+    │  App iframe   │
+    │  (chess.js,   │
+    │   weather,    │
+    │   GitHub)     │
+    └──────────────┘
 ```
 
-2. Install the required dependencies
+**Two processes run in dev:**
+- **Vite** (`:1212`) — serves the Chatbox React SPA with our ChatBridge routes
+- **Express** (`:3001`) — API server (chat, apps, auth). Vite proxies `/api/*` to Express.
 
-```bash
-npm install
+## What Changed From Upstream Chatbox
+
+- Added `vite.web.config.ts` — standalone Vite config (bypasses electron-vite)
+- Added `server/` — Express API server with OpenAI streaming, Supabase, app registry, GitHub OAuth
+- Added `/chatbridge` route — our chat UI with inline iframe app rendering
+- Added `/apps/{chess,weather,github}` routes — three plugin apps as TanStack routes
+- Modified `__root.tsx` — strips Chatbox layout when rendering inside iframes
+- Modified `index.tsx` — fast-path for iframe apps (skips Chatbox init/splash)
+- Kept: Chatbox sidebar, theme system, dark mode, conversation list UI
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Chatbox (React 18, Vite, TanStack Router, Tailwind CSS, Mantine) |
+| Backend | Express.js API server |
+| AI/LLM | OpenAI GPT-4o with function calling |
+| Database | Supabase (Postgres) |
+| Real-time | SSE (chat streaming), postMessage (iframe communication) |
+| Chess | chess.js (logic) + react-chessboard v4 (UI) — client-side only |
+| Weather | Open-Meteo API (free, no key) |
+| GitHub | GitHub REST API + OAuth2 popup flow |
+
+## Third-Party Apps
+
+### Chess
+Interactive chess game with built-in AI opponent (heuristic-based, no engine). Tools: `new_game`, `get_board_state`, `make_move`, `get_hint`. Board moves auto-send to LLM via USER_ACTION. Signals completion on checkmate/draw.
+
+### Weather Dashboard
+Current conditions and 7-day forecast using Open-Meteo API. Tools: `get_current_weather`, `get_forecast`.
+
+### GitHub Issue Tracker
+Browse, create, and search GitHub issues. Public repos work without auth. OAuth2 popup flow for write operations. Tools: `list_issues`, `create_issue`, `get_issue`, `search_issues`.
+
+## Setup
+
+### Prerequisites
+- Node.js 20+
+- pnpm 10+
+- Supabase project
+- OpenAI API key
+- GitHub OAuth app (optional, for GitHub write operations)
+
+### Environment Variables
+
+Create `.env` in the project root:
+```
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+OPENAI_API_KEY=sk-...
+GITHUB_CLIENT_ID=your-github-client-id       # optional
+GITHUB_CLIENT_SECRET=your-github-client-secret # optional
 ```
 
-3. Start the application (in development mode)
+### Database Setup
 
-```bash
-npm run dev
+Run the SQL in your Supabase dashboard:
+```sql
+CREATE TABLE users (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), email TEXT, name TEXT, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE conversations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id), title TEXT, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE messages (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), conversation_id UUID REFERENCES conversations(id), role TEXT NOT NULL, content TEXT, tool_calls JSONB, tool_call_id TEXT, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE apps (id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, iframe_url TEXT, auth_type TEXT DEFAULT 'none', enabled BOOLEAN DEFAULT true, api_key TEXT, created_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE app_tools (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), app_id TEXT REFERENCES apps(id), name TEXT NOT NULL, description TEXT, parameters_schema JSONB);
+CREATE TABLE app_sessions (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), conversation_id UUID REFERENCES conversations(id), app_id TEXT REFERENCES apps(id), state_snapshot JSONB, status TEXT DEFAULT 'active', created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());
+CREATE TABLE app_tokens (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), user_id UUID REFERENCES users(id), app_id TEXT REFERENCES apps(id), access_token_enc TEXT, refresh_token_enc TEXT, expires_at TIMESTAMPTZ);
+CREATE TABLE tool_invocations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), conversation_id UUID, app_id TEXT, tool_name TEXT, params JSONB, result JSONB, status TEXT DEFAULT 'pending', duration_ms INTEGER, created_at TIMESTAMPTZ DEFAULT now());
 ```
 
-4. Build the application, package the installer for current platform
+### Install & Run
 
 ```bash
-npm run package
+pnpm install
+pnpm run dev:chatbridge
 ```
 
-5. Build the application, package the installer for all platforms
+This starts both the Vite frontend (`:1212`) and Express API (`:3001`).
 
-```bash
-npm run package:all
+Open [http://localhost:1212/chatbridge](http://localhost:1212/chatbridge).
+
+Apps auto-bootstrap on server start (chess, weather, GitHub registered in Supabase).
+
+## Project Structure
+
+```
+server/                              # Express API server
+├── index.ts                         # All API routes + GitHub OAuth
+├── supabase.ts                      # Supabase client
+├── openai.ts                        # OpenAI client + system prompt
+└── bootstrap-apps.ts                # App manifest + auto-registration
+
+src/renderer/routes/
+├── chatbridge/index.tsx             # Main ChatBridge chat UI
+├── apps/
+│   ├── chess/index.tsx              # Chess app (iframe)
+│   ├── weather/index.tsx            # Weather app (iframe)
+│   └── github/index.tsx             # GitHub app (iframe)
+├── __root.tsx                       # Modified: strips layout for iframe apps
+└── index.tsx                        # Chatbox home (unchanged)
+
+src/renderer/index.tsx               # Modified: fast-path for iframe app init
+
+vite.web.config.ts                   # Standalone Vite config for web mode
+docs/                                # API docs, case study, dev log, demo script
 ```
 
-## Star History
+## API Documentation
 
-[![Star History Chart](https://api.star-history.com/svg?repos=chatboxai/chatbox&type=Date)](https://star-history.com/#chatboxai/chatbox&Date)
+See [docs/API.md](docs/API.md) for the full API reference.
 
-## Contact
+## Additional Documents
 
-[Twitter](https://x.com/ChatboxAI_HQ) | [Email](mailto:hi@chatboxai.com)
+- [API Documentation](docs/API.md)
+- [AI Cost Analysis](docs/AI_COST_ANALYSIS.md)
+- [AI Development Log](docs/AI_DEVELOPMENT_LOG.md)
+- [Case Study Analysis](docs/CASE_STUDY_ANALYSIS.md)
+- [Demo Script](docs/DEMO_SCRIPT.md)
+
+## Original Chatbox
+
+This project is a fork of [chatboxai/chatbox](https://github.com/chatboxai/chatbox) (GPLv3). The original Chatbox UI (sidebar, theme, settings) is preserved as the shell for our ChatBridge integration.
 
 ## License
 
-[LICENSE](./LICENSE)
+GPLv3 (inherited from Chatbox)

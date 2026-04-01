@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { v4 as uuidv4 } from "uuid";
 import { randomBytes } from "crypto";
 import { supabase } from "./supabase";
@@ -8,6 +9,7 @@ import { bootstrapApps } from "./bootstrap-apps";
 
 const app = express();
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json());
 
 // --- Helper: build OpenAI messages from conversation history ---
@@ -548,6 +550,104 @@ app.get("/api/sessions/:conversationId/context", async (req, res) => {
     appCompletions,
   });
 });
+
+// --- GitHub OAuth: GET /api/auth/github/start ---
+app.get("/api/auth/github/start", (req, res) => {
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  if (!clientId) {
+    return res.status(500).json({ error: "GITHUB_CLIENT_ID not configured" });
+  }
+
+  const crypto = require("crypto");
+  const state = crypto.randomBytes(24).toString("hex");
+  const baseUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+  const redirectUri = `${baseUrl}/api/auth/github/callback`;
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: "repo read:user",
+    state,
+  });
+
+  // Store state in a cookie for CSRF validation
+  res.cookie("github_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600000,
+    path: "/",
+  });
+
+  res.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`);
+});
+
+// --- GitHub OAuth: GET /api/auth/github/callback ---
+app.get("/api/auth/github/callback", async (req, res) => {
+  const { code, state, error: oauthError } = req.query;
+
+  if (oauthError) {
+    return res.status(400).send(errorPage(`GitHub authorization failed: ${oauthError}`));
+  }
+  if (!code || !state) {
+    return res.status(400).send(errorPage("Missing code or state parameter"));
+  }
+
+  const storedState = req.cookies?.github_oauth_state;
+  if (!storedState || storedState !== state) {
+    return res.status(403).send(errorPage("Invalid state parameter"));
+  }
+
+  const baseUrl = process.env.APP_URL || `http://localhost:${PORT}`;
+  const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      client_id: process.env.GITHUB_CLIENT_ID,
+      client_secret: process.env.GITHUB_CLIENT_SECRET,
+      code,
+      redirect_uri: `${baseUrl}/api/auth/github/callback`,
+    }),
+  });
+
+  if (!tokenResponse.ok) {
+    return res.status(502).send(errorPage("Failed to exchange code for token"));
+  }
+
+  const tokenData = await tokenResponse.json();
+  if (tokenData.error) {
+    return res.status(400).send(errorPage(`GitHub token error: ${tokenData.error_description || tokenData.error}`));
+  }
+
+  const accessToken = tokenData.access_token;
+
+  res.clearCookie("github_oauth_state", { path: "/" });
+  res.status(200).send(`<!DOCTYPE html>
+<html><head><title>GitHub Authorization</title></head>
+<body>
+  <p>Authorization successful. This window will close automatically.</p>
+  <script>
+    if (window.opener) {
+      window.opener.postMessage({ type: 'GITHUB_TOKEN', token: ${JSON.stringify(accessToken)} }, window.location.origin);
+    }
+    window.close();
+  </script>
+</body></html>`);
+});
+
+function errorPage(message: string): string {
+  return `<!DOCTYPE html>
+<html><head><title>GitHub Authorization Error</title></head>
+<body>
+  <p>Error: ${message}</p>
+  <script>
+    if (window.opener) {
+      window.opener.postMessage({ type: 'GITHUB_AUTH_ERROR', error: ${JSON.stringify(message)} }, window.location.origin);
+    }
+    setTimeout(() => window.close(), 3000);
+  </script>
+</body></html>`;
+}
 
 // --- GET /api/bootstrap ---
 app.get("/api/bootstrap", async (_req, res) => {
