@@ -109,6 +109,26 @@ function InitPage() {
   )
 }
 
+// Fast path: if we're in an iframe loading an /apps/* route (ChatBridge plugin),
+// skip all Chatbox init (migration, settings, splash) and render immediately
+const isIframeAppRoute = window.parent !== window && window.location.pathname.startsWith('/apps/')
+if (isIframeAppRoute) {
+  // Remove splash screen immediately
+  const splash = document.querySelector('.splash-screen')
+  if (splash) splash.remove()
+
+  // Render router directly — no migration, no settings hydration needed
+  ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+    <StrictMode>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </StrictMode>
+  )
+} else {
+
 // initializeApp执行时间少于1s的话，将不会看到log
 const tid = setTimeout(() => {
   ReactDOM.createRoot(document.getElementById('log-root') as HTMLElement).render(
@@ -167,6 +187,8 @@ initializeApp()
       })
     }
   })
+
+} // end of non-iframe path
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

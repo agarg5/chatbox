@@ -289,29 +289,44 @@ function ChatBridgePage() {
     try {
       const res = await fetch(`/api/chat/${convId}`)
       const data = await res.json()
-      setMessages(
-        (data.messages || []).map((m: any) => ({
-          id: m.id,
-          role: m.role as DisplayMessage['role'],
-          content: m.content,
-          toolCalls:
-            m.tool_calls?.map((tc: any) => ({
-              id: tc.id,
-              toolName: tc.function?.name || tc.toolName || 'unknown',
-              params: tc.function?.arguments
-                ? (() => {
-                    try {
-                      return JSON.parse(tc.function.arguments)
-                    } catch {
-                      return {}
-                    }
-                  })()
-                : (tc.params || {}),
-              result: tc.result,
-              status: tc.status || 'complete',
-            })) || null,
-        }))
-      )
+      const loadedMessages = (data.messages || []).map((m: any) => ({
+        id: m.id,
+        role: m.role as DisplayMessage['role'],
+        content: m.content,
+        toolCalls:
+          m.tool_calls?.map((tc: any) => ({
+            id: tc.id,
+            toolName: tc.function?.name || tc.toolName || 'unknown',
+            params: tc.function?.arguments
+              ? (() => {
+                  try {
+                    return JSON.parse(tc.function.arguments)
+                  } catch {
+                    return {}
+                  }
+                })()
+              : (tc.params || {}),
+            result: tc.result,
+            status: tc.status || 'complete',
+          })) || null,
+      }))
+      setMessages(loadedMessages)
+
+      // Re-activate iframes for any apps referenced in tool calls
+      const apps: ActiveApp[] = []
+      const seenApps = new Set<string>()
+      for (const msg of loadedMessages) {
+        if (msg.toolCalls) {
+          for (const tc of msg.toolCalls) {
+            const appId = tc.toolName.split('__')[0]
+            if (appId && !seenApps.has(appId)) {
+              seenApps.add(appId)
+              apps.push({ appId, iframeUrl: `/apps/${appId}`, anchorMessageId: msg.id })
+            }
+          }
+        }
+      }
+      if (apps.length > 0) setActiveApps(apps)
     } catch (err) {
       console.error('Failed to load conversation:', err)
     }
