@@ -1,6 +1,7 @@
 # ChatBridge Demo Script (4 Minutes)
 
 ## Setup Before Recording
+
 - Have the app running at the deployed URL (or localhost:3000)
 - Clear any existing conversations (fresh sidebar)
 - Browser in dark mode, fullscreen
@@ -125,3 +126,4 @@
 - **Context retention**: The LLM receives all past tool results in conversation history, enabling follow-up questions.
 - **OAuth flow**: The GitHub app uses a popup-based OAuth flow — no tokens pass through the iframe.
 - **Completion signaling**: When a chess game ends, the app sends APP_COMPLETE with the outcome, and the chatbot discusses it naturally.
+

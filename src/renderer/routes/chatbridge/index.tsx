@@ -343,6 +343,28 @@ function ChatBridgePage() {
     setIsStreaming(false)
   }
 
+  const handleDeleteConversation = useCallback(
+    async (convId: string, e: React.MouseEvent) => {
+      e.stopPropagation()
+      try {
+        const res = await fetch(`/api/chat/${convId}`, { method: 'DELETE' })
+        if (!res.ok) {
+          console.error('Failed to delete conversation')
+          return
+        }
+        setConversations((prev) => prev.filter((c) => c.id !== convId))
+        if (activeConvId === convId) {
+          setActiveConvId(null)
+          setMessages([])
+          setActiveApps([])
+        }
+      } catch (err) {
+        console.error('Failed to delete conversation:', err)
+      }
+    },
+    [activeConvId]
+  )
+
   const handleIframeRef = useCallback((appId: string, ref: React.RefObject<HTMLIFrameElement | null>) => {
     iframeRefs.current.set(appId, ref)
   }, [])
@@ -637,16 +659,39 @@ function ChatBridgePage() {
         </div>
         <div className="flex-1 overflow-y-auto">
           {conversations.map((conv) => (
-            <button
-              type="button"
+            <div
               key={conv.id}
-              onClick={() => loadConversation(conv.id)}
-              className={`w-full text-left px-3 py-2 text-sm border-b border-zinc-800 hover:bg-zinc-800 transition-colors truncate ${
+              className={`group flex items-center border-b border-zinc-800 hover:bg-zinc-800 transition-colors ${
                 conv.id === activeConvId ? 'bg-zinc-800 text-white' : 'text-zinc-400'
               }`}
             >
-              {conv.title}
-            </button>
+              <button
+                type="button"
+                onClick={() => loadConversation(conv.id)}
+                className="flex-1 text-left px-3 py-2 text-sm truncate min-w-0"
+              >
+                {conv.title}
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleDeleteConversation(conv.id, e)}
+                className="hidden group-hover:flex items-center justify-center w-7 h-7 mr-1 shrink-0 text-zinc-500 hover:text-red-400 transition-colors rounded"
+                title="Delete conversation"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="w-4 h-4"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
           ))}
         </div>
       </div>

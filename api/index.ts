@@ -182,6 +182,19 @@ app.get("/api/chat", async (_req, res) => {
   res.json({ conversations: data });
 });
 
+// DELETE /api/chat/:conversationId
+app.delete("/api/chat/:conversationId", async (req, res) => {
+  const { conversationId } = req.params;
+  const { data: conversation } = await supabase.from("conversations").select("id").eq("id", conversationId).single();
+  if (!conversation) return res.status(404).json({ error: "NOT_FOUND", message: `Conversation '${conversationId}' not found` });
+  await supabase.from("tool_invocations").delete().eq("conversation_id", conversationId);
+  await supabase.from("app_sessions").delete().eq("conversation_id", conversationId);
+  await supabase.from("messages").delete().eq("conversation_id", conversationId);
+  const { error } = await supabase.from("conversations").delete().eq("id", conversationId);
+  if (error) return res.status(500).json({ error: "DB_ERROR", message: error.message });
+  res.json({ status: "deleted", conversationId });
+});
+
 // GET /api/chat/:conversationId
 app.get("/api/chat/:conversationId", async (req, res) => {
   const { conversationId } = req.params;
