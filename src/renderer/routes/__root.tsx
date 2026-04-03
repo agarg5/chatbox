@@ -155,8 +155,8 @@ function Root() {
         .catch(() => ({ setting_chatboxai_first: false }) as RemoteConfig)
       setRemoteConfig(async (prev) => ({ ...(await prev), ...remoteConfig }))
 
-      // Skip guide-related checks if already on guide or settings/mcp page
-      if (location.pathname === '/guide' || location.pathname === '/settings/mcp') {
+      // Skip guide-related checks if already on guide, settings/mcp, or chatbridge page
+      if (location.pathname === '/guide' || location.pathname === '/settings/mcp' || location.pathname.startsWith('/chatbridge')) {
         initialized.current = true
         return
       }
