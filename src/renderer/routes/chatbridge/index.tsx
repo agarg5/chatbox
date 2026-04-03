@@ -98,14 +98,10 @@ function ChatMessage({
         {toolCalls && toolCalls.length > 0 && (
           <div className="mt-2 space-y-2">
             {toolCalls.map((tc) => (
-              <div key={tc.id} className="bg-zinc-900 rounded px-3 py-2 text-sm border border-zinc-700">
-                <div className="text-blue-400 font-mono text-xs mb-1">⚡ {tc.toolName}</div>
-                {tc.status === 'pending' && <div className="text-yellow-400 text-xs">Running...</div>}
-                {tc.result && (
-                  <div className="text-zinc-400 text-xs font-mono overflow-x-auto">
-                    {JSON.stringify(tc.result, null, 2)}
-                  </div>
-                )}
+              <div key={tc.id} className="bg-zinc-900 rounded px-3 py-1.5 text-sm border border-zinc-700 inline-block">
+                <span className="text-blue-400 font-mono text-xs">⚡ {tc.toolName}</span>
+                {tc.status === 'pending' && <span className="text-yellow-400 text-xs ml-2">Running...</span>}
+                {tc.result && <span className="text-green-400 text-xs ml-2">✓</span>}
               </div>
             ))}
           </div>
@@ -720,7 +716,7 @@ function ChatBridgePage() {
               </div>
             </div>
           )}
-          {messages.map((msg) => (
+          {messages.filter((msg) => msg.role !== 'tool').map((msg) => (
             <div key={msg.id}>
               <ChatMessage role={msg.role} content={msg.content} toolCalls={msg.toolCalls} />
               {appAnchorMap.has(msg.id) && (
