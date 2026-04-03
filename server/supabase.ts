@@ -2,7 +2,9 @@ import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
 import path from "path";
 
-// Load env from the original ChatBridge .env.local
+// Load env from local .env.local first (fork's own env)
+dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
+// Fallback to original ChatBridge .env.local
 dotenv.config({ path: path.resolve(__dirname, "../../ChatBridge/.env.local") });
 // Also try local .env
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
