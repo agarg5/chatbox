@@ -1,4 +1,4 @@
-# ChatBridge Demo Script (3 Minutes)
+# ChatBridge Demo Script (4 Minutes)
 
 ## Setup Before Recording
 - Have the app running at the deployed URL (or localhost:3000)
@@ -59,7 +59,35 @@
 
 ---
 
-## DEMO 3: Multi-App + Architecture (1:50 - 2:30)
+## DEMO 3: GitHub Issue Tracker + OAuth (1:50 - 2:40)
+
+**[Click "New Chat"]**
+
+**[Type: "Show me the issues in facebook/react"]**
+
+> "The GitHub app can read public repos without any authentication. The AI calls `list_issues` and the issue tracker panel opens with a list of open issues."
+
+**[Point to the GitHub panel showing issues with titles, labels, timestamps]**
+
+**[Type: "Tell me more about the first issue"]**
+
+> "I can drill into specific issues. The AI calls `get_issue` to fetch full details — description, comments, labels."
+
+**[Point to the issue detail view in the GitHub panel]**
+
+**[Type: "Create an issue in my repo abhigarg/test titled 'Bug report from ChatBridge'"]**
+
+> "Now watch — creating an issue requires write access, so the app triggers an OAuth popup. This is the per-app authentication flow."
+
+**[GitHub OAuth popup appears — click through to authorize]**
+
+> "Once authorized, the token is stored and the issue gets created. This demonstrates the full OAuth2 popup flow — the popup posts the token back to the parent via postMessage, avoiding iframe redirect issues."
+
+**[Point to the success message showing the created issue]**
+
+---
+
+## DEMO 4: Multi-App + Architecture (2:40 - 3:20)
 
 **[Click "New Chat"]**
 
@@ -67,7 +95,7 @@
 
 > "ChatBridge handles multiple apps in the same conversation. The AI routes to the right tool based on context. Both apps can be active simultaneously."
 
-**[Point to the app tabs showing weather + chess]**
+**[Point to the weather panel and chess board both visible]**
 
 > "Under the hood, here's what's happening: The LLM discovers available tools from the database. When it decides to use one, it returns a function call. The client bridges that to the app's iframe via postMessage. The app executes, returns the result, and the client sends it back to continue the conversation."
 
@@ -75,7 +103,7 @@
 
 ---
 
-## DEMO 4: Plugin Architecture (2:30 - 2:50)
+## DEMO 5: Plugin Architecture (3:20 - 3:40)
 
 > "The plugin interface is designed for third-party developers. Apps register via a REST API with a manifest defining their tools. Each tool has a name, description, and JSON schema for parameters."
 
@@ -85,9 +113,9 @@
 
 ---
 
-## CLOSING (2:50 - 3:00)
+## CLOSING (3:40 - 4:00)
 
-> "ChatBridge is built with Next.js, OpenAI GPT-4o with function calling, Supabase for persistence, and deployed on Vercel. Three apps, full bidirectional communication, OAuth support, and a clean plugin interface — all in one week. Thanks for watching!"
+> "ChatBridge is built on a fork of Chatbox with an Express backend, OpenAI GPT-4o with function calling, Supabase for persistence, and deployed on Vercel. Three apps — chess with bidirectional communication, weather with external APIs, and GitHub with OAuth — all integrated through a clean plugin interface. Thanks for watching!"
 
 ---
 
