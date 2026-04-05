@@ -67,39 +67,120 @@ const APP_MANIFESTS: AppManifest[] = [
     ],
   },
   {
-    id: "weather",
-    name: "Weather Dashboard",
-    description: "Get current weather and forecasts for any location",
-    iframeUrl: "/apps/weather",
+    id: "flashcards",
+    name: "Flashcards",
+    description:
+      "Interactive flashcard study tool for any subject. Create decks, flip cards, and track progress. Great for vocabulary, science, history, and more.",
+    iframeUrl: "/apps/flashcards",
     authType: "none",
     tools: [
       {
-        name: "get_current_weather",
-        description: "Get current weather conditions for a location",
+        name: "create_deck",
+        description:
+          "Create a flashcard deck on a topic. YOU must generate the card content (front=question, back=answer). Generate 5-15 age-appropriate cards for K-12 students.",
         parameters: {
           type: "object",
           properties: {
-            location: { type: "string", description: "City name, e.g. 'San Francisco'" },
+            topic: { type: "string", description: "The study topic, e.g. 'Solar System'" },
+            cards: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  front: { type: "string", description: "The question or prompt" },
+                  back: { type: "string", description: "The answer" },
+                },
+                required: ["front", "back"],
+              },
+              description: "Array of flashcard objects with front (question) and back (answer)",
+            },
           },
-          required: ["location"],
+          required: ["topic", "cards"],
         },
       },
       {
-        name: "get_forecast",
-        description: "Get weather forecast for a location",
+        name: "flip_card",
+        description: "Flip the current flashcard to show the other side",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "next_card",
+        description: "Move to the next flashcard",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "prev_card",
+        description: "Move to the previous flashcard",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_progress",
+        description: "Get the student's current study progress and score",
+        parameters: { type: "object", properties: {} },
+      },
+    ],
+  },
+  {
+    id: "math",
+    name: "Math Quiz",
+    description:
+      "Interactive math quiz with problems in addition, subtraction, multiplication, division, and fractions. Adjustable difficulty for K-12 students.",
+    iframeUrl: "/apps/math",
+    authType: "none",
+    tools: [
+      {
+        name: "start_quiz",
+        description:
+          "Start a math quiz. IMMEDIATELY start the quiz with sensible defaults when the student asks for math practice.",
         parameters: {
           type: "object",
           properties: {
-            location: { type: "string", description: "City name, e.g. 'New York'" },
-            days: {
+            topic: {
+              type: "string",
+              enum: ["addition", "subtraction", "multiplication", "division", "fractions", "mixed"],
+              description: "Math topic to practice",
+            },
+            difficulty: {
               type: "integer",
               minimum: 1,
-              maximum: 7,
-              description: "Number of days to forecast (default 7)",
+              maximum: 5,
+              description: "Difficulty level (1=easy, 5=hard). Controls number size.",
+            },
+            count: {
+              type: "integer",
+              minimum: 3,
+              maximum: 20,
+              description: "Number of problems (default 10)",
             },
           },
-          required: ["location"],
+          required: ["topic"],
         },
+      },
+      {
+        name: "submit_answer",
+        description: "Submit an answer to the current math problem",
+        parameters: {
+          type: "object",
+          properties: {
+            answer: { type: "string", description: "The student's answer" },
+          },
+          required: ["answer"],
+        },
+      },
+      {
+        name: "get_hint",
+        description: "Get a hint for the current math problem",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "skip_problem",
+        description: "Skip the current problem and move to the next one",
+        parameters: { type: "object", properties: {} },
+      },
+      {
+        name: "get_score",
+        description: "Get the student's current quiz score and progress",
+        parameters: { type: "object", properties: {} },
       },
     ],
   },
@@ -165,6 +246,14 @@ const APP_MANIFESTS: AppManifest[] = [
 ];
 
 export async function bootstrapApps() {
+  const manifestIds = APP_MANIFESTS.map((m) => m.id);
+
+  // Disable apps that are no longer in the manifest (e.g. weather)
+  await supabase
+    .from("apps")
+    .update({ enabled: false })
+    .not("id", "in", `(${manifestIds.join(",")})`);
+
   for (const manifest of APP_MANIFESTS) {
     const { data: existing } = await supabase
       .from("apps")
@@ -172,7 +261,11 @@ export async function bootstrapApps() {
       .eq("id", manifest.id)
       .single();
 
-    if (existing) continue;
+    if (existing) {
+      // Ensure it's enabled
+      await supabase.from("apps").update({ enabled: true }).eq("id", manifest.id);
+      continue;
+    }
 
     await supabase.from("apps").insert({
       id: manifest.id,

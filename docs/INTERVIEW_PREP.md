@@ -12,12 +12,13 @@ ChatBridge is an AI chat platform where third-party apps can plug in, register t
 - The iframe app executes the tool, sends back a `TOOL_RESULT` via postMessage
 - The frontend posts that result back to the server, which feeds it to GPT-4o for a final natural language response
 
-**Three apps demonstrate different complexity levels:**
+**Four apps demonstrate different complexity levels, all designed for K-12 education:**
 - **Chess** — high complexity: ongoing stateful game, bidirectional communication (board moves go back to LLM), completion signaling on checkmate
-- **Weather** — low complexity: simple request/response, no auth, external API (Open-Meteo)
-- **GitHub Issues** — medium complexity: CRUD operations, OAuth2 popup flow for write access, public read without auth
+- **Flashcards** — medium complexity: LLM generates card content, students flip and rate themselves, progress tracking, bidirectional (UI clicks feed back to chat)
+- **Math Quiz** — medium complexity: procedurally generated problems, adjustable difficulty, instant feedback, hints via chat, bidirectional
+- **GitHub Issues** — medium complexity: OAuth2 popup flow for write access, demonstrates the authenticated app pattern
 
-**Key design decision:** Apps are sandboxed in iframes with a typed postMessage protocol (TOOL_INVOKE, TOOL_RESULT, READY, USER_ACTION, APP_COMPLETE). This mirrors real plugin platforms like Shopify or Figma — apps control their own UI and communicate through a narrow, well-defined interface.
+**Key design decision:** Apps are sandboxed in iframes with a typed postMessage protocol (TOOL_INVOKE, TOOL_RESULT, READY, USER_ACTION, APP_COMPLETE). This mirrors real plugin platforms like Shopify or Figma — apps control their own UI and communicate through a narrow, well-defined interface. Every app is bidirectional — students can control them through chat commands OR by interacting with the UI directly. UI interactions send USER_ACTION messages back to the chatbot, which responds with educational feedback.
 
 **Built on a fork of Chatbox** (open-source Electron chat app). Used their React+Vite shell for the UI chrome (sidebar, themes) and added our Express server layer + plugin system on top.
 

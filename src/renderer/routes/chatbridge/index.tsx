@@ -217,7 +217,7 @@ function ChatInput({ onSend, disabled }: { onSend: (msg: string) => void; disabl
         value={input}
         onChange={handleInput}
         onKeyDown={handleKeyDown}
-        placeholder="Type a message... Try: 'Let's play chess' or 'Weather in NYC'"
+        placeholder="Type a message... Try: 'Let's play chess' or 'Quiz me on the solar system'"
         disabled={disabled}
         rows={1}
         className="flex-1 resize-none bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-blue-500 disabled:opacity-50 transition-colors"
@@ -596,7 +596,7 @@ function ChatBridgePage() {
     handleSendRef.current = handleSend
   }, [handleSend])
 
-  // Listen for USER_ACTION (board moves) and APP_COMPLETE from iframes
+  // Listen for USER_ACTION and APP_COMPLETE from iframes
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return
@@ -604,30 +604,61 @@ function ChatBridgePage() {
 
       if (msg.type === 'USER_ACTION' && msg.result) {
         const result = msg.result as Record<string, unknown>
-        const move = result.move as string
-        const moveHistory = result.moveHistory as string[]
-        const fen = result.fen as string
-        const gameStatus = result.status as string
+        const action = result.action as string
 
-        let autoMessage: string
-        if (gameStatus === 'checkmate') {
-          autoMessage = `I played ${move}. That's checkmate! The game is over.`
-        } else if (gameStatus === 'draw') {
-          autoMessage = `I played ${move}. The game is a draw.`
-        } else {
-          autoMessage = `I moved ${move} on the board. The AI opponent responded. Current position after ${moveHistory?.length || '?'} moves: ${fen}. What do you think of the position?`
+        let autoMessage: string | null = null
+
+        if (action === 'board_move') {
+          // Chess move
+          const move = result.move as string
+          const moveHistory = result.moveHistory as string[]
+          const fen = result.fen as string
+          const gameStatus = result.status as string
+          if (gameStatus === 'checkmate') {
+            autoMessage = `I played ${move}. That's checkmate! The game is over.`
+          } else if (gameStatus === 'draw') {
+            autoMessage = `I played ${move}. The game is a draw.`
+          } else {
+            autoMessage = `I moved ${move} on the board. The AI opponent responded. Current position after ${moveHistory?.length || '?'} moves: ${fen}. What do you think of the position?`
+          }
+        } else if (action === 'marked_known' || action === 'marked_unknown') {
+          // Flashcard interaction
+          const front = result.front as string
+          const known = result.known as number
+          const unknown = result.unknown as number
+          const remaining = result.remaining as number
+          const status = action === 'marked_known' ? 'knew it' : 'still learning'
+          autoMessage = `I ${status} for: "${front}". Progress: ${known} known, ${unknown} still learning, ${remaining} remaining.`
+        } else if (action === 'deck_complete') {
+          // Flashcard deck completed
+          autoMessage = `I finished the flashcard deck! Score: ${result.known}/${result.totalCards} (${result.percentCorrect}% correct).`
+        } else if (action === 'answer_submitted') {
+          // Math quiz answer
+          const correct = result.correct as boolean
+          const problem = result.problem as string
+          const given = result.givenAnswer as string
+          const correctAnswer = result.correctAnswer as number
+          if (correct) {
+            autoMessage = `I answered ${given} for "${problem}" — correct! Score: ${result.score}/${(result.score as number) + ((result.remaining as number) || 0)}.`
+          } else {
+            autoMessage = `I answered ${given} for "${problem}" but the answer was ${correctAnswer}. Can you explain how to solve it?`
+          }
+        } else if (action === 'quiz_complete') {
+          // Math quiz completed
+          autoMessage = `I finished the math quiz! Score: ${result.correct}/${result.totalProblems} (${result.percentCorrect}% correct).`
+        } else if (action === 'skipped_problem') {
+          autoMessage = `I skipped "${result.problem}". The answer was ${result.correctAnswer}. ${result.remaining} problems remaining.`
+        } else if (action === 'restart_deck' || action === 'restart_quiz') {
+          autoMessage = `I restarted the ${action === 'restart_deck' ? 'flashcard deck' : 'math quiz'}. Let's go again!`
         }
 
-        if (!isStreamingRef.current && handleSendRef.current) {
+        if (autoMessage && !isStreamingRef.current && handleSendRef.current) {
           handleSendRef.current(autoMessage)
         }
       }
 
       if (msg.type === 'APP_COMPLETE') {
-        setMessages((prev) => [
-          ...prev,
-          { id: `complete-${Date.now()}`, role: 'assistant', content: `Game over: ${JSON.stringify(msg.result)}` },
-        ])
+        // Don't add a separate message — the USER_ACTION handler above covers it
       }
     }
     window.addEventListener('message', handler)
@@ -710,8 +741,8 @@ function ChatBridgePage() {
                 <h2 className="text-2xl font-bold mb-2 text-zinc-300">ChatBridge</h2>
                 <p className="text-sm">AI chat with third-party app integration</p>
                 <p className="text-xs mt-4 text-zinc-600">
-                  Try: &quot;Let&apos;s play chess&quot; · &quot;Weather in NYC&quot; · &quot;Show issues in
-                  facebook/react&quot;
+                  Try: &quot;Let&apos;s play chess&quot; · &quot;Quiz me on the solar system&quot; · &quot;Math
+                  quiz on multiplication&quot;
                 </p>
               </div>
             </div>

@@ -4,6 +4,20 @@ AI chat platform with third-party app integration, built on top of [Chatbox](htt
 
 Built for [Gauntlet AI](https://gauntletai.com).
 
+**Deployed:** https://chatbridge-seven.vercel.app
+
+## Case Study Analysis
+
+TutorMeAI's core challenge isn't building a chatbot — it's building a platform boundary that lets unknown third-party code run safely inside a conversation while keeping the chatbot aware of what's happening. This is fundamentally a trust problem wrapped in an engineering problem.
+
+**Key Problems.** The first problem is sandboxing untrusted code in a K-12 context. When a third-party app runs inside the chat, it has proximity to student data: conversation history, user identity, and the ability to render arbitrary UI. A malicious or poorly-built app could exfiltrate student information, display inappropriate content, or impersonate the chatbot. In an education setting with minors, the consequences of getting this wrong aren't just technical — they're legal (COPPA, FERPA) and reputational. The second problem is bidirectional state awareness. The chatbot needs to know what's happening inside an app it doesn't control. When a student plays chess and asks "what should I do here?", the chatbot must query the board state from an app that manages its own internal logic. This means defining a communication protocol flexible enough for any app — from a simple calculator to a multi-step physics simulation — without requiring the platform to understand each app's domain. The third problem is completion signaling: how does the platform know when a third-party interaction is "done"? A chess game has a clear end state (checkmate), but a flashcard set or math quiz might not.
+
+**Tradeoffs.** We chose iframes with postMessage over Web Components or server-side rendering for app sandboxing. Iframes provide real browser-level isolation — the app can't access the parent DOM, cookies, or JavaScript context. The tradeoff is performance (each iframe is a separate page load) and communication complexity (postMessage is asynchronous and untyped by default). For a K-12 platform where safety matters more than milliseconds, this is the right call. We chose LLM function calling for tool discovery rather than a custom routing layer, meaning the chatbot decides when to invoke an app based on natural language intent. The tradeoff is non-determinism — we mitigate this with explicit routing rules in the system prompt.
+
+**Ethical Decisions.** In a K-12 context, we default to restrictive rather than permissive. Apps run in sandboxed iframes with `allow-scripts allow-same-origin` but no access to camera, microphone, or geolocation. The platform validates tool schemas at registration time. OAuth tokens are stored server-side and never exposed to the client. When an app misbehaves, the chatbot acknowledges the error and continues — a student shouldn't be left staring at a broken screen.
+
+**What We Landed On.** A single-agent architecture where one LLM routes to sandboxed iframe apps via a typed postMessage protocol, with app state living entirely in the iframe and the platform maintaining conversation context in a persistent database. This keeps the platform simple, the apps independent, and the security boundary clear. It's not the most sophisticated architecture possible, but it's one we can reason about, test, and trust — which matters more when the users are children.
+
 ## Architecture
 
 ```
@@ -14,18 +28,19 @@ Browser (Chatbox + Vite)               Express API Server           External Ser
 │                          │<────│                      │<────│                  │
 │  /chatbridge (chat UI)   │     │  POST /api/chat/     │     │  Supabase        │
 │                          │     │   :id/tool-result    │     │  (Postgres)      │
-│  /apps/chess   (iframe)  │     │                      │     │                  │
-│  /apps/weather (iframe)  │     │  GET /api/apps       │     │  GitHub API      │
-│  /apps/github  (iframe)  │     │  GET /api/bootstrap  │     │  Open-Meteo API  │
+│  /apps/chess      (iframe)│     │                      │     │                  │
+│  /apps/flashcards (iframe)│     │  GET /api/apps       │     │  GitHub API      │
+│  /apps/math       (iframe)│     │  GET /api/bootstrap  │     │                  │
+│  /apps/github     (iframe)│     │                      │     │                  │
 └──────────────────────────┘     └──────────────────────┘     └─────────────────┘
          │        ▲
          │ postMessage (TOOL_INVOKE / TOOL_RESULT / READY / USER_ACTION / APP_COMPLETE)
          ▼        │
     ┌──────────────┐
     │  App iframe   │
-    │  (chess.js,   │
-    │   weather,    │
-    │   GitHub)     │
+    │  (chess,      │
+    │  flashcards,  │
+    │  math, github)│
     └──────────────┘
 ```
 
@@ -38,7 +53,7 @@ Browser (Chatbox + Vite)               Express API Server           External Ser
 - Added `vite.web.config.ts` — standalone Vite config (bypasses electron-vite)
 - Added `server/` — Express API server with OpenAI streaming, Supabase, app registry, GitHub OAuth
 - Added `/chatbridge` route — our chat UI with inline iframe app rendering
-- Added `/apps/{chess,weather,github}` routes — three plugin apps as TanStack routes
+- Added `/apps/{chess,flashcards,math,github}` routes — four plugin apps as TanStack routes
 - Modified `__root.tsx` — strips Chatbox layout when rendering inside iframes
 - Modified `index.tsx` — fast-path for iframe apps (skips Chatbox init/splash)
 - Kept: Chatbox sidebar, theme system, dark mode, conversation list UI
@@ -53,18 +68,24 @@ Browser (Chatbox + Vite)               Express API Server           External Ser
 | Database | Supabase (Postgres) |
 | Real-time | SSE (chat streaming), postMessage (iframe communication) |
 | Chess | chess.js (logic) + react-chessboard v4 (UI) — client-side only |
-| Weather | Open-Meteo API (free, no key) |
+| Flashcards | LLM-generated card content, interactive flip/rate UI |
+| Math Quiz | Procedurally generated problems, adjustable difficulty |
 | GitHub | GitHub REST API + OAuth2 popup flow |
 
 ## Third-Party Apps
 
-### Chess
-Interactive chess game with built-in AI opponent (heuristic-based, no engine). Tools: `new_game`, `get_board_state`, `make_move`, `get_hint`. Board moves auto-send to LLM via USER_ACTION. Signals completion on checkmate/draw.
+All apps are **interactive and bidirectional** — students can control them through chat or by clicking in the UI. UI interactions are sent back to the chatbot via USER_ACTION, and the chatbot responds with encouragement and educational feedback.
 
-### Weather Dashboard
-Current conditions and 7-day forecast using Open-Meteo API. Tools: `get_current_weather`, `get_forecast`.
+### Chess (Complex State, Bidirectional)
+Interactive chess game with built-in AI opponent. Tools: `new_game`, `get_board_state`, `make_move`, `get_hint`. Board moves auto-send to LLM. Signals completion on checkmate/draw.
 
-### GitHub Issue Tracker
+### Flashcards (K-12 Educational, Interactive)
+Study flashcards on any subject. The LLM generates age-appropriate card content. Tools: `create_deck`, `flip_card`, `next_card`, `prev_card`, `get_progress`. Students flip cards and rate themselves (knew it / still learning). Progress tracked with completion signal.
+
+### Math Quiz (K-12 Educational, Interactive)
+Practice math with procedurally generated problems in addition, subtraction, multiplication, division, and fractions. Adjustable difficulty levels for K-12 students. Tools: `start_quiz`, `submit_answer`, `get_hint`, `skip_problem`, `get_score`. Students answer in the UI, get instant feedback, and the chatbot explains incorrect answers.
+
+### GitHub Issue Tracker (OAuth2 Authentication)
 Browse, create, and search GitHub issues. Public repos work without auth. OAuth2 popup flow for write operations. Tools: `list_issues`, `create_issue`, `get_issue`, `search_issues`.
 
 ## Setup
@@ -112,7 +133,7 @@ This starts both the Vite frontend (`:1212`) and Express API (`:3001`).
 
 Open [http://localhost:1212/chatbridge](http://localhost:1212/chatbridge).
 
-Apps auto-bootstrap on server start (chess, weather, GitHub registered in Supabase).
+Apps auto-bootstrap on server start (chess, flashcards, math, GitHub registered in Supabase).
 
 ## Project Structure
 
@@ -127,7 +148,8 @@ src/renderer/routes/
 ├── chatbridge/index.tsx             # Main ChatBridge chat UI
 ├── apps/
 │   ├── chess/index.tsx              # Chess app (iframe)
-│   ├── weather/index.tsx            # Weather app (iframe)
+│   ├── flashcards/index.tsx         # Flashcards app (iframe)
+│   ├── math/index.tsx               # Math Quiz app (iframe)
 │   └── github/index.tsx             # GitHub app (iframe)
 ├── __root.tsx                       # Modified: strips layout for iframe apps
 └── index.tsx                        # Chatbox home (unchanged)

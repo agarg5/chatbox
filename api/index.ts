@@ -18,35 +18,48 @@ const supabase = createClient(
 // --- OpenAI ---
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `You are ChatBridge, a helpful AI assistant with access to third-party apps.
+const SYSTEM_PROMPT = `You are ChatBridge, a helpful AI tutor assistant for K-12 students with access to interactive educational apps.
 
-You have three integrated apps:
-1. **Chess** — Interactive chess game. Tools: chess__new_game, chess__get_board_state, chess__make_move, chess__get_hint. Use ONLY when the user wants to play chess, make moves, or get chess advice.
-2. **Weather** — Weather dashboard. Tools: weather__get_current_weather, weather__get_forecast. Use ONLY for weather questions about specific locations.
-3. **GitHub** — GitHub issue tracker. Tools: github__list_issues, github__create_issue, github__get_issue, github__search_issues. Use ONLY when the user asks about GitHub issues or repositories. Reading public repos works without auth. Creating issues requires OAuth — if the tool returns AUTH_REQUIRED, tell the user to click "Connect GitHub" in the GitHub panel.
+You have four integrated apps:
+1. **Chess** — Interactive chess game. Tools: chess__new_game, chess__get_board_state, chess__make_move, chess__get_hint. Use when the student wants to play chess.
+2. **Flashcards** — Interactive study flashcards. Tools: flashcards__create_deck, flashcards__flip_card, flashcards__next_card, flashcards__prev_card, flashcards__get_progress. Use when the student wants to study, review, or quiz themselves on any subject.
+3. **Math Quiz** — Interactive math practice. Tools: math__start_quiz, math__submit_answer, math__get_hint, math__skip_problem, math__get_score. Use when the student wants to practice math.
+4. **GitHub** — GitHub issue tracker. Tools: github__list_issues, github__create_issue, github__get_issue, github__search_issues. Use for GitHub issues. Reading public repos works without auth. Creating issues requires OAuth — if the tool returns AUTH_REQUIRED, tell the user to click "Connect GitHub" in the GitHub panel.
 
 Tool names are namespaced as {appId}__{toolName}.
 
+IMMEDIATE ACTION RULES:
+- When the student says "let's play chess" or similar, IMMEDIATELY call chess__new_game with color "white" and difficulty 5 as defaults.
+- When the student says "quiz me on [topic]" or "make flashcards about [topic]", IMMEDIATELY call flashcards__create_deck. YOU generate the card content — create 8-12 age-appropriate cards with clear questions and concise answers.
+- When the student says "math quiz" or "practice multiplication" or similar, IMMEDIATELY call math__start_quiz with the appropriate topic and difficulty 3, count 10 as defaults.
+- Do NOT ask clarifying questions first — just start the activity. The student can adjust later.
+
+FLASHCARD CONTENT GENERATION:
+When creating flashcards, generate educational content appropriate for K-12 students. Keep questions clear, answers concise (1-2 sentences max), and cover a good range of the topic.
+
 ROUTING RULES:
-- Only invoke a tool when the user's request clearly matches that app's purpose.
-- If a query is ambiguous (e.g., "check my status"), ask the user to clarify which app they mean.
-- NEVER invoke tools for general knowledge questions, math, coding help, or anything unrelated to chess, weather, or GitHub issues. Answer those directly.
-- When the user says "let's play chess" or similar, IMMEDIATELY call chess__new_game with color "white" and difficulty 5 as defaults. Do NOT ask clarifying questions first — just start the game. The user can adjust later.
+- Only invoke a tool when the student's request clearly matches that app's purpose.
+- If a query is ambiguous, ask the student to clarify.
+- NEVER invoke tools for general knowledge questions or anything unrelated to the available apps. Answer those directly.
+
+RESPONDING TO USER_ACTION:
+- When a student interacts with an app, respond encouragingly. For flashcards: brief encouragement. For math: cheer if correct, explain if incorrect. For chess: comment on strategy.
 
 COMPLETION HANDLING:
-- When a chess game ends (checkmate, draw, stalemate), discuss the game result naturally.
-- When weather data is returned, summarize it conversationally.
-- When GitHub issues are returned, present them in a readable format.
+- When a flashcard deck is finished, celebrate their score and offer to study again or try a different topic.
+- When a math quiz is done, congratulate them and highlight areas for improvement.
+- When a chess game ends, discuss the game result and offer to play again.
 
 ERROR HANDLING:
-- If a tool call fails or times out, acknowledge the error and suggest the user try again.
+- If a tool call fails or times out, acknowledge the error and suggest trying again.
 - If an app returns AUTH_REQUIRED, explain that the user needs to connect their account.
 
 CONTEXT:
 - Remember previous tool results in the conversation.
 - You can have multiple apps active in one conversation.
+- Be encouraging, patient, and supportive — you're a tutor helping students learn.
 
-Be concise, conversational, and helpful.`;
+Be concise, conversational, and encouraging.`;
 
 // --- App manifests ---
 const APP_MANIFESTS = [
@@ -61,11 +74,25 @@ const APP_MANIFESTS = [
     ],
   },
   {
-    id: "weather", name: "Weather Dashboard", description: "Get current weather and forecasts for any location",
-    iframeUrl: "/apps/weather", authType: "none",
+    id: "flashcards", name: "Flashcards", description: "Interactive flashcard study tool for any subject. Create decks, flip cards, and track progress.",
+    iframeUrl: "/apps/flashcards", authType: "none",
     tools: [
-      { name: "get_current_weather", description: "Get current weather conditions for a location", parameters: { type: "object", properties: { location: { type: "string" } }, required: ["location"] } },
-      { name: "get_forecast", description: "Get weather forecast for a location", parameters: { type: "object", properties: { location: { type: "string" }, days: { type: "integer", minimum: 1, maximum: 7 } }, required: ["location"] } },
+      { name: "create_deck", description: "Create a flashcard deck on a topic. YOU must generate the card content (front=question, back=answer). Generate 8-12 age-appropriate cards for K-12 students.", parameters: { type: "object", properties: { topic: { type: "string", description: "The study topic" }, cards: { type: "array", items: { type: "object", properties: { front: { type: "string", description: "The question or prompt" }, back: { type: "string", description: "The answer" } }, required: ["front", "back"] }, description: "Array of flashcard objects" } }, required: ["topic", "cards"] } },
+      { name: "flip_card", description: "Flip the current flashcard to show the other side", parameters: { type: "object", properties: {} } },
+      { name: "next_card", description: "Move to the next flashcard", parameters: { type: "object", properties: {} } },
+      { name: "prev_card", description: "Move to the previous flashcard", parameters: { type: "object", properties: {} } },
+      { name: "get_progress", description: "Get the student's current study progress and score", parameters: { type: "object", properties: {} } },
+    ],
+  },
+  {
+    id: "math", name: "Math Quiz", description: "Interactive math quiz with addition, subtraction, multiplication, division, and fractions. Adjustable difficulty for K-12 students.",
+    iframeUrl: "/apps/math", authType: "none",
+    tools: [
+      { name: "start_quiz", description: "Start a math quiz. IMMEDIATELY start when the student asks for math practice.", parameters: { type: "object", properties: { topic: { type: "string", enum: ["addition", "subtraction", "multiplication", "division", "fractions", "mixed"], description: "Math topic to practice" }, difficulty: { type: "integer", minimum: 1, maximum: 5, description: "Difficulty level (1=easy, 5=hard)" }, count: { type: "integer", minimum: 3, maximum: 20, description: "Number of problems (default 10)" } }, required: ["topic"] } },
+      { name: "submit_answer", description: "Submit an answer to the current math problem", parameters: { type: "object", properties: { answer: { type: "string", description: "The student's answer" } }, required: ["answer"] } },
+      { name: "get_hint", description: "Get a hint for the current math problem", parameters: { type: "object", properties: {} } },
+      { name: "skip_problem", description: "Skip the current problem", parameters: { type: "object", properties: {} } },
+      { name: "get_score", description: "Get the student's current quiz score and progress", parameters: { type: "object", properties: {} } },
     ],
   },
   {
@@ -81,9 +108,12 @@ const APP_MANIFESTS = [
 ];
 
 async function bootstrapApps() {
+  const manifestIds = APP_MANIFESTS.map((m) => m.id);
+  // Disable apps not in manifest (e.g. weather)
+  await supabase.from("apps").update({ enabled: false }).not("id", "in", `(${manifestIds.join(",")})`);
   for (const m of APP_MANIFESTS) {
     const { data: existing } = await supabase.from("apps").select("id").eq("id", m.id).single();
-    if (existing) continue;
+    if (existing) { await supabase.from("apps").update({ enabled: true }).eq("id", m.id); continue; }
     await supabase.from("apps").insert({ id: m.id, name: m.name, description: m.description, iframe_url: m.iframeUrl, auth_type: m.authType, enabled: true });
     if (m.tools.length > 0) {
       await supabase.from("app_tools").insert(m.tools.map((t) => ({ app_id: m.id, name: t.name, description: t.description, parameters_schema: t.parameters })));
