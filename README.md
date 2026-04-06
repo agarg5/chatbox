@@ -170,6 +170,7 @@ See [docs/API.md](docs/API.md) for the full API reference.
 - [AI Cost Analysis](docs/AI_COST_ANALYSIS.md)
 - [AI Development Log](docs/AI_DEVELOPMENT_LOG.md)
 - [Case Study Analysis](docs/CASE_STUDY_ANALYSIS.md)
+- [Scalability Analysis](docs/SCALABILITY.md)
 - [Demo Script](docs/DEMO_SCRIPT.md)
 
 ## Original Chatbox

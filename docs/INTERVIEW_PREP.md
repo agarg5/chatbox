@@ -46,7 +46,31 @@ ChatBridge is an AI chat platform where third-party apps can plug in, register t
 
 ---
 
-## 3. If you had more time, what would you improve or do differently?
+## 3. How would you handle 200,000 students with unpredictable third-party app response times?
+
+The "back from recess" scenario: thousands of students hit the platform at once, each conversation potentially waiting on a third-party app that could take milliseconds or minutes.
+
+**First, the good news about our current architecture:** The third-party app wait happens *client-side*, not server-side. When GPT-4o returns a tool call, the server closes the SSE stream. The client sends `postMessage` to the iframe and waits locally. The server isn't holding a connection during that wait. This was a deliberate consequence of the iframe+postMessage model — we accidentally got the hardest part right.
+
+**The real bottleneck is the LLM API.** 1000 simultaneous requests to GPT-4o will hit rate limits. The solution is a **queue-based architecture**:
+- Client sends a message, server enqueues a job, returns a job ID immediately
+- Workers process the queue at the maximum safe rate for the OpenAI API
+- Students see "Your tutor is helping other students — estimated wait: 15 seconds" instead of a timeout
+- The queue absorbs the burst and smooths it into steady throughput
+
+**Circuit breakers for third-party apps:** If a specific app starts failing (timeouts, errors), a circuit breaker trips and the chatbot tells the LLM "this app is temporarily unavailable." This prevents a broken chess app from cascading failures across the entire platform. The chatbot gracefully continues: "The chess app is taking a moment. While we wait, want to try flashcards?"
+
+**Caching for common patterns:** Many students will ask "quiz me on the solar system." Rather than generating 10 flashcards via GPT-4o every time, cache the function call response for popular topics. Math quiz problems are *already* generated client-side (procedural, no server load) — this was a deliberate design choice for exactly this reason.
+
+**Database connection pooling:** Supabase with PgBouncer multiplexes thousands of client connections over a smaller pool of actual database connections. Without this, 1000 concurrent conversations would exhaust the Postgres connection limit.
+
+**Horizontal scaling on Vercel:** Functions scale automatically — each request can be handled by a new or reused instance. The architecture is already stateless (conversation state in Supabase, not in-memory), so any instance can handle any request.
+
+**The priority order:** (1) Queue for LLM calls, (2) DB connection pooling, (3) Response caching, (4) Circuit breakers, (5) WebSocket upgrade to reduce connection overhead.
+
+---
+
+## 4. If you had more time, what would you improve or do differently?
 
 **Real chess engine:**
 - Currently using a heuristic AI (piece values + position bonuses). With more time, I'd integrate Stockfish WASM in a Web Worker for proper engine-level play. The architecture supports it — just swap the `getAIMove()` function.
@@ -68,7 +92,7 @@ ChatBridge is an AI chat platform where third-party apps can plug in, register t
 
 ---
 
-## 4. What was the most challenging part of this problem, and how did you overcome it?
+## 5. What was the most challenging part of this problem, and how did you overcome it?
 
 **The hardest part was integrating our server-side plugin system into a client-only app.**
 
